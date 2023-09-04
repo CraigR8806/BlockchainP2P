@@ -9,8 +9,10 @@ module.exports = class Client {
     constructor(parentServer, ip, port, name){
         this.generateKeyset();
         this.parentServer = parentServer;
-        this.ip = ip;
-        this.port = port;
+        this.connection = {
+            'ip':ip,
+            'port':port
+        }
         this.name = name;
     }
 
@@ -30,24 +32,23 @@ module.exports = class Client {
         this.publicKey = publicKey;
     }
 
-    joinNetwork(...ips) {
+    joinNetwork(ips) {
         ips.forEach(conn=>{
-            ip=conn.split(":")[0];
-            port=conn.split(":")[1];
-            this.makePostRequest(ip, port, '/', 
+            
+            this.makePostRequest(conn.ip, conn.port, '/node/join', 
             {
-                name:this.name,
-                publicKey:this.publicKey,
-                ip:this.ip
+                'name':this.name,
+                'publicKey':this.publicKey,
+                'connection':this.connection
             },
             data=>{
-                this.parentServer.updateChain(data.chain);
+                console.log(data);
             });
         })
     }
 
     makePostRequest(ip, port, path, data, callback) {
-        var post_data = querystring.stringify({
+        var post_data = JSON.stringify({
             'compilation_level' : 'ADVANCED_OPTIMIZATIONS',
             'output_format': 'json',
             'output_info': 'compiled_code',

@@ -1,17 +1,18 @@
-const Block = require('./src/shared/data/block');
-const Blockchain = require('./src/shared/data/blockchain');
+const Server = require('./src/server/server');
+var propertiesReader = require('properties-reader');
+
+
+var propertyFile = process.argv[2];
+
+
+var properties = propertiesReader(propertyFile);
+var ip = properties.get("ip");
+var port = properties.get("port");
+var name = properties.get("name");
+var bootstrapIPs = JSON.parse(properties.getRaw("bootstrap.ip"));
 
 
 
-var testchain = new Blockchain();
+var server = new Server(ip, port, name);
 
-testchain.addNewBlock(new Block(Date.now(), "a"))
-testchain.addNewBlock(new Block(Date.now(), "ab"))
-testchain.addNewBlock(new Block(Date.now(), "abc"))
-testchain.addNewBlock(new Block(Date.now(), "abcd"))
-testchain.addNewBlock(new Block(Date.now(), "abcde"))
-
-console.log(testchain.isChainValid());
-testchain.chain[2].data = "123";
-
-console.log(testchain.isChainValid());
+server.startServer(bootstrapIPs);
