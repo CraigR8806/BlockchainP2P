@@ -1,45 +1,37 @@
 const http = require('node:http');
 const keepAliveAgent = new http.Agent({ keepAlive: true });
-const crypto = require('crypto');
 
-module.exports = class Client {
-
+class Client {
 
 
-    constructor(parentServer, ip, port, name){
-        this.generateKeyset();
-        this.parentServer = parentServer;
-        this.connection = {
-            'ip':ip,
-            'port':port
-        }
-        this.name = name;
-    }
 
-    generateKeyset() {
-        var { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-            modulusLength: 2048,
-            publicKeyEncoding: {
-              type: 'spki',
-              format: 'pem'
-            },
-            privateKeyEncoding: {
-              type: 'pkcs8',
-              format: 'pem'
-            }
-          }); 
-        this.privateKey = privateKey;
-        this.publicKey = publicKey;
+    constructor(parentNode){
+        this.parentNode = parentNode;
     }
 
     joinNetwork(ips) {
+        let selfAsPeer = this.parentNode.asPeer();
         ips.forEach(conn=>{
             
-            this.makePostRequest(conn.ip, conn.port, '/node/join', 
+            this.makePostRequest(conn, '/node/join', 
             {
-                'name':this.name,
-                'publicKey':this.publicKey,
-                'connection':this.connection
+                'peer': selfAsPeer
+            },
+            data=>{
+                console.log("--------------------------");
+                console.log(data);
+                console.log("--------------------------");
+                return;
+                this.parentNode.addPeers(data.peers);
+            });
+        })
+    }
+
+    requestTransaction(ips, transaction) {
+        ips.forEach(conn=>{
+            this.makePostRequest(conn, '/transaction/request',
+            {
+                
             },
             data=>{
                 console.log(data);
@@ -47,7 +39,7 @@ module.exports = class Client {
         })
     }
 
-    makePostRequest(ip, port, path, data, callback) {
+    makePostRequest(conn, path, data, callback) {
         var post_data = JSON.stringify({
             'compilation_level' : 'ADVANCED_OPTIMIZATIONS',
             'output_format': 'json',
@@ -57,8 +49,8 @@ module.exports = class Client {
         });
       
         var post_options = {
-            host: ip,
-            port: port,
+            host: conn.ip,
+            port: conn.port,
             path: path,
             method: 'POST',
             headers: {
@@ -82,3 +74,4 @@ module.exports = class Client {
 
 
 
+module.exports.Client = Client;
