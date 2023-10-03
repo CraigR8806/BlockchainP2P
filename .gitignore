@@ -1,3 +1,8 @@
-package-lock.json
-node_modules/**
+pyvenv.cfg
+lib/**
+bin/**
+include/**
+build/**
+BlockchainP2P.egg-info/**
 **/testinglogs/**
+

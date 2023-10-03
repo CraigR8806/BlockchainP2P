@@ -9,5 +9,5 @@ rm -rf $this_dir/testing/testinglogs/*
 
 pids=""
 for i in $(seq $numberOfNodes);do
-    node $this_dir/index.js $this_dir/testing/${i}.properties 2>$this_dir/testing/testinglogs/$i.log 1>$this_dir/testing/testinglogs/$i.log & 
+    python $this_dir/src/main.py $this_dir/testing/${i}.properties 2>$this_dir/testing/testinglogs/$i.log 1>$this_dir/testing/testinglogs/$i.log & 
 done
