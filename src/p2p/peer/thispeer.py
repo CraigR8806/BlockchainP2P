@@ -2,14 +2,12 @@ from p2p.peer.peer import Peer
 from p2p.connection import Connection
 from p2p.client.client import Client
 from p2p.server.server import Server
-from Crypto.PublicKey import RSA
 
 
 class ThisPeer(Peer):
 
     def __init__(self, name:str, connection:Connection):
         super().__init__(name, connection)
-        self.generate_keyset()
 
         self.running = False
 
@@ -37,12 +35,6 @@ class ThisPeer(Peer):
 
     def get_active_peers(self):
         return self.active_peers
-    
-    def generate_keyset(self):
-        key = RSA.generate(2048)
-        self.private_key = key.export_key('PEM')
-        self.public_key = key.publickey().exportKey('PEM')
-
 
     def as_peer(self):
-        return Peer(self.name, self.connection, self.public_key)
+        return Peer(self.name, self.connection)

@@ -13,8 +13,6 @@ def main():
 
     properties = util.read_properties_file(sys.argv[1])
 
-    print(sys.argv[1])
-
     connection = Connection(properties['server.ip'], properties['server.port'])
 
     me = ThisPeer(properties['server.name'], connection)

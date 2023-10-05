@@ -3,17 +3,15 @@ from p2p.connection import Connection
 
 class Peer:
 
-    def __init__(self, name:str, connection:Connection, public_key:str=None):
+    def __init__(self, name:str, connection:Connection):
         self.name = name
         self.connection = connection   
-        self.public_key = public_key
 
 
     def __eq__(self, other):
         return self.name == other.name \
             and self.connection.ip_address == other.connection.ip_address \
-            and self.connection.port == other.connection.port \
-            and self.public_key == other.public_key
+            and self.connection.port == other.connection.port 
     
 
     def __ne__(self, other):

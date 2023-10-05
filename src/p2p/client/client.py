@@ -12,6 +12,9 @@ class Client:
         for connection in bootstrap_connections:
             response = requests.post("http://" + connection.ip_address + ":" + connection.port + "/node/join",
                                      jsonpickle.encode({'peer': peer}))
+            
+    def shutdown_server(self):
+        requests.get("http://localhost:" + self.parent_node.connection.port + "/api/shutdown")
     
     def request_transaction(self, transaction):
         pass
