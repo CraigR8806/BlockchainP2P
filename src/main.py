@@ -1,4 +1,4 @@
-from p2p.peer.thispeer import ThisPeer
+from peers.blockchain.fullchainpeer import FullChainPeer
 from p2p.peer.peer import Peer
 from p2p.connection import Connection
 import signal
@@ -15,7 +15,7 @@ def main():
 
     connection = Connection(properties['server.ip'], properties['server.port'])
 
-    me = ThisPeer(properties['server.name'], connection)
+    me = FullChainPeer(properties['server.name'], connection, True)
 
     me.start_node()
     time.sleep(3)

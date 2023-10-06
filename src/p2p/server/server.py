@@ -1,5 +1,5 @@
 import jsonpickle
-from flask import Flask, request
+from flask import Flask, request, Response
 import threading
 
 
@@ -23,7 +23,6 @@ class Server:
         self.server_thread.start()
 
     def stop_server(self):
-        self.parent_node.client.shutdown_server()
         self.server_thread.join()
     
 
@@ -46,3 +45,11 @@ class Server:
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
+
+
+    def build_response(self, response_code:int, response_obj:dict) -> Response:
+        return Response(
+            response=jsonpickle.encode(response_obj),
+            status=response_code,
+            mimetype="application/json"
+        )
