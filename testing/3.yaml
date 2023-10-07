@@ -1,0 +1,17 @@
+server:
+    name: serverC
+    ip_address: localhost
+    port: 32002
+
+client:
+    bootstrap_connections:
+        - ip_address: localhost
+          port: 32000
+        - ip_address: localhost
+          port: 32001
+
+database:
+    host: localhost
+    port: 42000
+    username: db_user
+    password: db_password

@@ -4,7 +4,6 @@ class Diagnostics:
 
     def __init__(self, server:Server):
         self.server = server
-        print('h')
         self.server.add_get_endpoint("/diag/node/list", "nodeList", self.__list_nodes)
         self.server.add_get_endpoint("/diag/node/name", "nodeName", self.__get_name)
         self.server.add_get_endpoint("/diag/node/connection", "nodeConnection", self.__get_connection)

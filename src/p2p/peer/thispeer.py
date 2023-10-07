@@ -49,11 +49,11 @@ class ThisPeer(Peer):
         if self.running:
             delta=time.time() - self.start_time
             return { "year": math.floor(delta/31536000),
-                     "month": math.floor(delta/2629746),
-                     "day": math.floor(delta/86400),
-                     "hour": math.floor(delta/3600),
-                     "minute": math.floor(delta/60),
-                     "second": delta%60 }
+                     "month": math.floor(delta/2629746)%12,
+                     "day": math.floor(delta/86400)%30,
+                     "hour": math.floor(delta/3600)%24,
+                     "minute": math.floor(delta/60)%60,
+                     "second": math.floor(delta%60) }
         else:
             return {"year":0,
                     "month":0,

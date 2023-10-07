@@ -9,15 +9,17 @@ class FullChainPeer(ThisPeer):
         super().__init__(name, connection)
         self.logger = self.server.app.logger
         self.server.add_get_endpoint("/getBlocks", "getBlocks", self.__get_blocks)
+
         if diagnostics:
-            print("hh")
             self.diagnostics = Diagnostics(self.server)
+
+        
 
         
 
     def __get_blocks(self):
         self.logger.info(request.args)
-        return request.args
+        return self.server.build_response(200, request.args)
 
 
     

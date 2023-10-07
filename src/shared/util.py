@@ -1,11 +1,11 @@
+import yaml
+
 
 def read_properties_file(file_name):
-    separator = "="
-    keys = {}
-    with open(file_name) as f:
-
-        for line in f:
-            if separator in line:
-                name, value = line.split(separator, 1)
-                keys[name.strip()] = value.strip()
-    return keys
+    out=None
+    with open(file_name, "r") as stream:
+        try:
+            out=yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    return out

@@ -5,21 +5,19 @@ import signal
 import sys
 import time
 import shared.util as util
-import jsonpickle
-
 
 
 def main():
 
     properties = util.read_properties_file(sys.argv[1])
 
-    connection = Connection(properties['server.ip'], properties['server.port'])
+    connection = Connection(properties['server']['ip_address'], properties['server']['port'])
 
-    me = FullChainPeer(properties['server.name'], connection, True)
+    me = FullChainPeer(properties['server']['name'], connection, True)
 
     me.start_node()
     time.sleep(3)
-    me.join_network([Connection(c['ip_address'], c['port']) for c in jsonpickle.decode(properties['client.bootstrap_connections'])])
+    me.join_network([Connection(c['ip_address'], c['port']) for c in properties['client']['bootstrap_connections']])
 
 
     def kill_it(signal, frame):
