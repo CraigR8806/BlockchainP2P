@@ -12,13 +12,13 @@ class Diagnostics:
 
 
     def __list_nodes(self):
-        return self.server.build_response(200, {"peers":self.server.parent_node.get_active_peers()})
+        return self.server.build_response(200, self.server.parent_node.get_active_peers())
 
     def __get_name(self):
         return self.server.build_response(200, {"name": self.server.parent_node.name})
     
     def __get_connection(self):
-        return self.server.build_response(200, {"connection":self.server.parent_node.connection})
+        return self.server.build_response(200, self.server.parent_node.connection)
     
     def __uptime(self):
         return self.server.build_response(200, {"uptime":self.server.parent_node.uptime()})

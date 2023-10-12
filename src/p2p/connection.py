@@ -3,7 +3,7 @@
 
 class Connection:
 
-    def __init__(self, ip_address:str, port:str):
-        self.ip_address = ip_address
+    def __init__(self, host:str, port:str):
+        self.host = host
         self.port = port
 

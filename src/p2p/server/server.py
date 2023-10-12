@@ -1,7 +1,7 @@
-import jsonpickle
 from flask import Flask, request, Response
+from p2p.peer.peer import Peer
 import threading
-
+import shared.util as util
 
 
 class Server:
@@ -19,7 +19,7 @@ class Server:
     
 
     def start_server(self):
-        self.server_thread = threading.Thread(target=self.app.run, kwargs={'port':self.parent_node.connection.port})
+        self.server_thread = threading.Thread(target=self.app.run, kwargs={'host':self.parent_node.connection.host,'port':self.parent_node.connection.port,'ssl_context':('/apps/node/pki/node.pem','/apps/node/pki/node.key')})
         self.server_thread.start()
 
     def stop_server(self):
@@ -34,11 +34,11 @@ class Server:
 
 
     def __node_join(self):
-        peer = jsonpickle.decode(request.get_data())['peer']
+        peer = util.extract_data(Peer, request.get_data(as_text=True))
         if peer not in self.parent_node.get_active_peers():
             self.parent_node.add_peer(peer)
             self.parent_node.client.join_network([p.connection for p in self.parent_node.get_active_peers() if p != self.parent_node.as_peer()], peer)
-        return jsonpickle.encode({'peers': self.parent_node.get_active_peers()})
+        return self.build_response(200, self.parent_node.get_active_peers())
     
     def __shutdown_server():
         func = request.environ.get('werkzeug.server.shutdown')
@@ -49,7 +49,11 @@ class Server:
 
     def build_response(self, response_code:int, response_obj:dict) -> Response:
         return Response(
-            response=jsonpickle.encode(response_obj),
+            response=util.jsonify_data(response_obj),
             status=response_code,
             mimetype="application/json"
         )
+    
+    
+
+

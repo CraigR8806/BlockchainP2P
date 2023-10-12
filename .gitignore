@@ -1,4 +1,10 @@
 pyvenv.cfg
+deploy.sh
+start.sh
+stop.sh
+getlogs.sh
+remoteScripts/**
+dist/**
 lib/**
 bin/**
 include/**

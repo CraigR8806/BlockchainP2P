@@ -1,0 +1,15 @@
+server:
+    name: ${NAME}
+    host: ${HOST}
+    port: ${PORT}
+
+client:
+    bootstrap_connections:
+        - host: ${BOOTSTRAP_CONNECTION_HOST}
+          port: ${BOOTSTRAP_CONNECTION_PORT}
+
+database:
+    host: ${DATABASE_HOST}
+    port: ${DATABASE_PORT}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASS}

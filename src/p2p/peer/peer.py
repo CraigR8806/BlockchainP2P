@@ -10,7 +10,7 @@ class Peer:
 
     def __eq__(self, other):
         return self.name == other.name \
-            and self.connection.ip_address == other.connection.ip_address \
+            and self.connection.host == other.connection.host \
             and self.connection.port == other.connection.port 
     
 

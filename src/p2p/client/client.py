@@ -1,5 +1,5 @@
 import requests
-import jsonpickle
+import shared.util as util
 
 class Client:
 
@@ -10,8 +10,8 @@ class Client:
         if peer is None:
             peer = self.parent_node.as_peer()
         for connection in bootstrap_connections:
-            response = requests.post("http://" + connection.ip_address + ":" + str(connection.port) + "/node/join",
-                                     jsonpickle.encode({'peer': peer}))
+            response = requests.post("https://" + connection.host + ":" + str(connection.port) + "/node/join",
+                                     util.jsonify_data(peer), verify='/apps/node/pki/ca.pem', cert=('/apps/node/pki/node.pem', '/apps/node/pki/node.key'))
             
     def shutdown_server(self):
         requests.get("http://localhost:" + self.parent_node.connection.port + "/api/shutdown")

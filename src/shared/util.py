@@ -1,5 +1,5 @@
 import yaml
-
+import jsonpickle
 
 def read_properties_file(file_name):
     out=None
@@ -9,3 +9,10 @@ def read_properties_file(file_name):
         except yaml.YAMLError as exc:
             print(exc)
     return out
+
+
+def jsonify_data(data:any):
+        return jsonpickle.encode(data)
+    
+def extract_data(clazz:type, jzon:str):
+    return jsonpickle.decode(jzon)
