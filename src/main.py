@@ -30,13 +30,16 @@ def main():
         bootstrap_connections=[Connection(c['host'], c['http_port']) for c in properties['client']['bootstrap_connections']]
 
     database_connection = Connection(properties['database']['host'], properties['database']['port'])
+    if not properties['client']['should_bootstrap']:
+        bootstrap_connections = []
 
     me = FullChainPeer(properties['server']['name'],
                         connection, 
                         database_connection,
                         properties['database']['name'], 
                         properties['database']['collection']['name'],
-                        diagnostics=True, pki=pki)
+                        diagnostics=True, pki=pki,
+                        bootstrap=properties['client']['should_bootstrap'])
 
     me.start_node()
     time.sleep(3)

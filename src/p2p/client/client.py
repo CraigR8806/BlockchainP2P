@@ -14,6 +14,8 @@ class Client:
         if peer is None:
             peer = self.parent_node.as_peer()
         response = self.post_some([Peer('any',c) for c in bootstrap_connections], '/node/join', peer)
+        print("Response---------------------------")
+        print(response)
             
             
     def shutdown_server(self):

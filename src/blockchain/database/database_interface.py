@@ -1,15 +1,14 @@
 from abc import ABC, abstractmethod
 from blockchain.data.block import Block
-from blockchain.data.blockchain import Blockchain
+from p2p.connection import Connection
 import typing as t
 
 
 class DatabaseInterface(ABC):
 
 
-    def __init__(self, host:str, port:int, database:str):
-        self.host = host
-        self.port = port
+    def __init__(self, database_connection:Connection, database:str):
+        self.database_connection = database_connection
         self.database = database
 
 

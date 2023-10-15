@@ -1,5 +1,8 @@
 import yaml
 import jsonpickle
+from bson.json_util import dumps
+import bson.json_util as u
+from blockchain.database.document_entry import DocumentEntry
 
 def read_properties_file(file_name):
     out=None
@@ -12,7 +15,11 @@ def read_properties_file(file_name):
 
 
 def jsonify_data(data:any):
-        return jsonpickle.encode(data)
+    return jsonpickle.encode(data)
     
 def extract_data(jzon:str):
     return jsonpickle.decode(jzon)
+
+def documentify_data(data:DocumentEntry):
+     return data.as_document()
+

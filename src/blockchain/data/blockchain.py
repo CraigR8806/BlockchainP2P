@@ -2,16 +2,25 @@ from blockchain.data.block import Block
 from blockchain.data.blockcandidate import BlockCandidate
 from hashlib import sha256
 from random import randint
+from blockchain.database.mongo_impl import MongoDatabaseImpl
 
 class Blockchain:
 
-    def __init__(self):
-        self.chain = [self.create_genesis_block()]
+    def __init__(self, database_connection, database, collection, bootstrap):
+
+        self.database = MongoDatabaseImpl(database_connection, database, collection)
+        if not bootstrap and self.database.get_chain_length() == 0:
+            self.database.commit_block(self.create_genesis_block())
+
+        print("Loaded blockchain from database.  Chain length is: " + str(self.database.get_chain_length()))
+
+        print(self.database.get_block(0))
+
         self.change_pool = set([])
         self.candidate = None
 
     def create_genesis_block(self):
-        return Block("01/01/2017", "Genesis block", "0")
+        return Block("01/01/2017", "Genesis block", 0, "0")
     
     def get_latest_block(self):
         return self.chain[-1]
