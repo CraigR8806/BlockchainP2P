@@ -1,15 +1,27 @@
 server:
     name: ${NAME}
     host: ${HOST}
-    port: ${PORT}
+    http_port: ${HTTP_PORT}
+    https_port: ${HTTPS_PORT}
 
 client:
     bootstrap_connections:
         - host: ${BOOTSTRAP_CONNECTION_HOST}
-          port: ${BOOTSTRAP_CONNECTION_PORT}
+          http_port: ${BOOTSTRAP_CONNECTION_HTTP_PORT}
+          https_port: ${BOOTSTRAP_CONNECTION_HTTPS_PORT}
+
+pki:
+    enabled: ${HTTPS_ENABLED}
+    certificate_path: ${CERTIFICATE_PATH}
+    private_key_path: ${PRIVATE_KEY_PATH}
+    certificate_authority_path: ${CERTIFICATE_AUTHORITY_PATH}
 
 database:
     host: ${DATABASE_HOST}
     port: ${DATABASE_PORT}
     username: ${DATABASE_USER}
     password: ${DATABASE_PASS}
+    name: blockchain
+    collection:
+        name: blocks
+

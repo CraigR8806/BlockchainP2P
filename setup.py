@@ -7,5 +7,5 @@ setup(
    author='Craig Rmaage',
    author_email='',
    packages=find_packages(exclude=['test']),
-   install_requires=['wheel', 'flask', 'requests', 'pycryptodome', 'jsonpickle', 'pymongo', 'pyyaml'], 
+   install_requires=['wheel', 'flask', 'requests', 'jsonpickle', 'pymongo', 'pyyaml'], 
 )

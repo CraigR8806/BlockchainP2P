@@ -10,5 +10,4 @@ bin/**
 include/**
 build/**
 BlockchainP2P.egg-info/**
-**/testinglogs/**
-
+testing/resources/peer/**

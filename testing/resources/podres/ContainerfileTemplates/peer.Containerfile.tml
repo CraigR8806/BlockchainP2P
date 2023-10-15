@@ -1,0 +1,15 @@
+FROM python:3.8-slim-buster
+
+WORKDIR /app
+
+COPY ../requirements.txt .
+
+RUN pip install -r requirements.txt
+
+ADD ../BlockchainP2P-${BCP2PVERSION}.tar.gz .
+COPY properties.yaml .
+COPY pki pki
+
+STOPSIGNAL SIGKILL
+
+ENTRYPOINT exec /usr/local/bin/python /app/BlockchainP2P-${BCP2PVERSION}/src/main.py /app/properties.yaml

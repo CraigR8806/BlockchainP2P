@@ -2,19 +2,23 @@ from p2p.peer.peer import Peer
 from p2p.connection import Connection
 from p2p.client.client import Client
 from p2p.server.server import Server
+from shared.pki.pki import PKI
 import time
 import math
 
 class ThisPeer(Peer):
 
-    def __init__(self, name:str, connection:Connection):
+    def __init__(self, name:str, connection:Connection, pki:PKI=None):
         super().__init__(name, connection)
 
         self.running = False
 
-        
+        self.pki = pki
+
         self.client = Client(self)
         self.server = Server(self)
+
+        self.logger = self.server.app.logger
 
         self.active_peers = set([])
         self.active_peers.add(self.as_peer())

@@ -4,6 +4,7 @@ import threading
 import shared.util as util
 
 
+
 class Server:
 
     def __init__(self, parent_node):
@@ -19,7 +20,13 @@ class Server:
     
 
     def start_server(self):
-        self.server_thread = threading.Thread(target=self.app.run, kwargs={'host':self.parent_node.connection.host,'port':self.parent_node.connection.port,'ssl_context':('/apps/node/pki/node.pem','/apps/node/pki/node.key')})
+        self.server_thread = threading.Thread(target=self.app.run, 
+                                              kwargs=
+                                              {
+                                                  'host':self.parent_node.connection.host,
+                                                  'port':self.parent_node.connection.port,
+                                                  'ssl_context':self.parent_node.pki.get_ssl_context()
+                                              })
         self.server_thread.start()
 
     def stop_server(self):
@@ -34,7 +41,7 @@ class Server:
 
 
     def __node_join(self):
-        peer = util.extract_data(Peer, request.get_data(as_text=True))
+        peer = util.extract_data(request.get_data(as_text=True))
         if peer not in self.parent_node.get_active_peers():
             self.parent_node.add_peer(peer)
             self.parent_node.client.join_network([p.connection for p in self.parent_node.get_active_peers() if p != self.parent_node.as_peer()], peer)

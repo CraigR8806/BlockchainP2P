@@ -1,4 +1,4 @@
-from shared.data.block import Block
+from blockchain.data.block import Block
 
 
 class BlockCandidate:

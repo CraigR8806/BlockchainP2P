@@ -1,5 +1,5 @@
-from shared.data.block import Block
-from shared.data.blockcandidate import BlockCandidate
+from blockchain.data.block import Block
+from blockchain.data.blockcandidate import BlockCandidate
 from hashlib import sha256
 from random import randint
 

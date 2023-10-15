@@ -14,5 +14,5 @@ def read_properties_file(file_name):
 def jsonify_data(data:any):
         return jsonpickle.encode(data)
     
-def extract_data(clazz:type, jzon:str):
+def extract_data(jzon:str):
     return jsonpickle.decode(jzon)
