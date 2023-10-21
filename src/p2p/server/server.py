@@ -5,6 +5,8 @@ from shared.pki.pki import PKI
 from p2p.dataservice import DataService
 import threading
 import shared.util as util
+import time
+import math
 
 
 
@@ -20,12 +22,16 @@ class Server:
         self.add_post_endpoint("/node/join", "node_join", self.__node_join)
         self.add_get_endpoint("/api/shutdown", "shutdown", self.__shutdown_server)
 
+        self.running = None
+
+
 
     def update_chain(self, chain):
         pass
     
 
     def start_server(self):
+        self.start_time = time.time()
         self.server_thread = threading.Thread(target=self.app.run, 
                                               kwargs=
                                               {
@@ -49,10 +55,16 @@ class Server:
     def __node_join(self):
         peer = util.extract_data(request.get_data(as_text=True))
         current_active_peers = self.data_service.deep_copy("active_peers")
+        self.app.logger.warning("here's the peer " + str(type(peer)))
+        
         if peer not in current_active_peers:
             self.data_service.modify("active_peers", lambda v:v.add(peer))
             current_active_peers = self.data_service.deep_copy("active_peers")
-            self.client.join_network([p.connection for p in current_active_peers if p != self.parent_peer], peer)
+            responses = self.client.join_network([p.connection for p in current_active_peers if p != self.parent_peer], peer)
+            for p in responses:
+                self.app.logger.warning(responses[p].json())
+            
+
         return self.build_response(200, current_active_peers)
     
     def __shutdown_server():
@@ -69,6 +81,16 @@ class Server:
             mimetype="application/json"
         )
     
+
+    def uptime(self):
+        delta=time.time() - self.start_time
+        return { "year": math.floor(delta/31536000),
+                    "month": math.floor(delta/2629746)%12,
+                    "day": math.floor(delta/86400)%30,
+                    "hour": math.floor(delta/3600)%24,
+                    "minute": math.floor(delta/60)%60,
+                    "second": math.floor(delta%60) }
+       
     
 
 

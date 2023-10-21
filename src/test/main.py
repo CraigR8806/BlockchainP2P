@@ -9,15 +9,15 @@ r3 = True
 
 def do_the_thing1(ds):
     while r1:
-        ds.modify("i", lambda v:v.update({"a": v["a"] + 1}))
+        ds.modify("i", lambda v:v.update({"a": v["a"] + 1}), asyync=True)
 
 def do_the_thing2(ds):
     while r2:
-        ds.modify("i", lambda v:v.update({"b": v["b"] + 1}))
+        ds.modify("i", lambda v:v.update({"b": v["b"] + 1}), asyync=False)
 
 def do_the_thing3(ds):
     while r3:
-        ds.modify("i", lambda v:v.update({"c": v["c"] + 1}))
+        ds.modify("i", lambda v:v.update({"c": v["c"] + 1}), asyync=False)
 
 
 
@@ -50,7 +50,7 @@ def main():
     t3.start()
     print("here3")
 
-    sleep(1)
+    sleep(.0001)
 
     print("here4")
 
@@ -64,9 +64,11 @@ def main():
     t3.join()
 
 
-    o = ds.get_deep_copy("i")
+    o = ds.deep_copy("i")
     print(str(o))
     ds.stop_service()
+
+    print(ds.get_highest_queue_count())
 
 
 

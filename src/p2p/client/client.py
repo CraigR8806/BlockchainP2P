@@ -17,8 +17,8 @@ class Client:
     def join_network(self, bootstrap_connections:t.Iterable[Connection], peer=None):
         if peer is None:
             peer = self.parent_peer
-        response = self.post_some([Peer('any',c) for c in bootstrap_connections], '/node/join', peer)
-        print(response)
+        return self.post_some([Peer('any',c) for c in bootstrap_connections], '/node/join', peer)
+        
             
     def shutdown_server(self):
         self.get_one(self.parent_peer.connection, '/api/shutdown')
@@ -33,7 +33,6 @@ class Client:
         responses={}
         for peer in peers:
             responses[peer] = self.__get(peer.connection, uri)
-
         return responses
 
     def get_one(self, connection:Connection, uri:str) -> Response:
@@ -45,12 +44,7 @@ class Client:
     def post_some(self, peers:t.Iterable[Peer], uri:str, data:any) -> t.Dict[Peer, Response]:
         responses = {}
         for peer in peers:
-            response = self.__post(peer.connection, uri, data)
-            print("-----")
-            print(response.json())
-            print(response.status_code)
-            print("-----")
-            responses[peer] = response
+            responses[peer] = self.__post(peer.connection, uri, data)
         return responses
 
     def post_one(self, connection:Connection, uri:str, data:any) -> Response:

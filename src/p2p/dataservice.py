@@ -22,10 +22,14 @@ class DataService:
         self.__data_map = {}
         self.__data_map_condition = Condition()
         self.__deep_copy_map = {}
-        self.queue = []
-        self.thread = Thread(target=self.__listen)
-        self.timeout_duration = timeout_duration
-        self.running = False
+        self.__queue = []
+        self.__thread = Thread(target=self.__listen)
+        self.__timeout_duration = timeout_duration
+        self.__running = False
+        self.__highest_queue_count = 0
+
+    def get_highest_queue_count(self):
+        return self.__highest_queue_count
 
     def modify(self, key:str, func:DataAccessor, condition:Condition = None, callback:Callable = None, asyync:bool = False):
         if key not in self.__data_map:
@@ -48,7 +52,7 @@ class DataService:
         self.__data_map_condition.acquire()
         if entry.condition is not None:
             entry.condition.acquire()
-        self.queue.append(entry)
+        self.__queue.append(entry)
         self.__data_map_condition.notify()
         self.__data_map_condition.release()
         if not asyync:
@@ -56,9 +60,9 @@ class DataService:
             entry.condition.release()
 
     def start_service(self):
-        if not self.running:
-            self.running = True
-            self.thread.start()
+        if not self.__running:
+            self.__running = True
+            self.__thread.start()
 
     def __listen(self):
 
@@ -68,33 +72,34 @@ class DataService:
 
             timeout_process.join(duration)
 
-        while self.running:
+        while self.__running:
             self.__data_map_condition.acquire()
-            self.__data_map_condition.wait_for(lambda:not self.running or len(self.queue) > 0)
+            self.__data_map_condition.wait_for(lambda:not self.__running or len(self.__queue) > 0)
             self.__data_map_condition.release()
-            if len(self.queue):
-                entry = self.queue.pop(0)
+            if len(self.__queue):
+                self.__highest_queue_count = max(len(self.__queue), self.__highest_queue_count)
+                entry = self.__queue.pop(0)
                 if entry.condition is not None:
                     entry.condition.acquire()
 
-                exec_callable_with_timeout(entry.func, entry.args, self.timeout_duration)
+                exec_callable_with_timeout(entry.func, entry.args, self.__timeout_duration)
 
                 if entry.condition is not None:
                     entry.condition.notify()
                     entry.condition.release()
 
                 if entry.callback is not None:
-                    exec_callable_with_timeout(entry.callback, None, self.timeout_duration)
+                    exec_callable_with_timeout(entry.callback, None, self.__timeout_duration)
 
 
             
     def stop_service(self):
-        if self.running:
-            self.running = False
+        if self.__running:
+            self.__running = False
             self.__data_map_condition.acquire()
             self.__data_map_condition.notify()
             self.__data_map_condition.release()
-            self.thread.join(self.timeout_duration + 1)
+            self.__thread.join(self.__timeout_duration + 1)
 
     def add(self, key:str, val:Any, condition:Condition = None, callback:Callable = None, asyync:bool = False):
         entry = DataService.__DataServiceQueueEntry(key, self.__add_it, [key, val], condition, callback)
