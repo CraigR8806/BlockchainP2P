@@ -1,8 +1,8 @@
 import yaml
 import jsonpickle
-from bson.json_util import dumps
-import bson.json_util as u
+import json
 from blockchain.database.document_entry import DocumentEntry
+
 
 def read_properties_file(file_name):
     out=None
@@ -21,5 +21,9 @@ def extract_data(jzon:str):
     return jsonpickle.decode(jzon)
 
 def documentify_data(data:DocumentEntry):
-     return data.as_document()
+    return json.loads(jsonpickle.encode(data))
+
+def dataify_document(document:dict):
+    document.pop("_id", None)
+    return jsonpickle.decode(json.dumps(document))
 

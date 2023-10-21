@@ -11,3 +11,6 @@ include/**
 build/**
 BlockchainP2P.egg-info/**
 testing/resources/peer/**
+nodehost
+nodehost.pub
+vpnpki/**

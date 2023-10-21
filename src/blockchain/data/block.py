@@ -1,6 +1,7 @@
 from hashlib import sha256
 from blockchain.database.document_entry import DocumentEntry
 import jsonpickle
+import json
 
 
 
@@ -16,12 +17,3 @@ class Block(DocumentEntry):
 
     def calculate_hash(self):
         return sha256(jsonpickle.encode(self).encode('utf-8')).hexdigest()
-    
-    def as_document(self):
-        return {
-            "timestamp":self.timestamp,
-            "previous_hash":self.previous_hash,
-            "data":self.data.as_document() if type(self.data) not in (str, int, bool) else self.data,
-            "index":self.index,
-            "hash":self.hash
-        }

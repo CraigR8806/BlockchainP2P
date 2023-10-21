@@ -2,6 +2,7 @@ from p2p.peer.peer import Peer
 from p2p.connection import Connection
 from p2p.client.client import Client
 from p2p.server.server import Server
+from p2p.dataservice import DataService
 from shared.pki.pki import PKI
 import time
 import math
@@ -15,14 +16,18 @@ class ThisPeer(Peer):
 
         self.pki = pki
 
-        self.client = Client(self)
-        self.server = Server(self)
+        print("In constuctor for thispeer")
+        self.data_service = DataService()
+        self.data_service.start_service()
+        active_peers = set([])
+        active_peers.add(self.as_peer())
+
+        self.data_service.add("active_peers", active_peers)
+
+        self.client = Client(self.as_peer(), self.data_service, self.pki)
+        self.server = Server(self.as_peer(), self.client, self.data_service, self.pki)
 
         self.logger = self.server.app.logger
-
-        self.active_peers = set([])
-        self.active_peers.add(self.as_peer())
-
         self.start_time = None
 
 
@@ -36,15 +41,10 @@ class ThisPeer(Peer):
         if self.running:
             self.client.shutdown_server()
             self.server.stop_server()
+            self.data_service.stop_service()
 
     def join_network(self, bootstrap_connections):
         self.client.join_network(bootstrap_connections)
-
-    def add_peer(self, peer):
-        self.active_peers.add(peer)
-
-    def get_active_peers(self):
-        return self.active_peers
 
     def as_peer(self):
         return Peer(self.name, self.connection)

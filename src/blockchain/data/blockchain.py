@@ -14,8 +14,6 @@ class Blockchain:
 
         print("Loaded blockchain from database.  Chain length is: " + str(self.database.get_chain_length()))
 
-        print(self.database.get_block(0))
-
         self.change_pool = set([])
         self.candidate = None
 

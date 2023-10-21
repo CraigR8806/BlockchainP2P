@@ -6,6 +6,6 @@ setup(
    description='A Peer 2 Peer network implementation to support a blockchain ecosystem',
    author='Craig Rmaage',
    author_email='',
-   packages=find_packages(exclude=['test']),
+   packages=find_packages(),
    install_requires=['wheel', 'flask', 'requests', 'jsonpickle', 'pymongo', 'pyyaml'], 
 )

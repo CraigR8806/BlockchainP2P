@@ -6,6 +6,7 @@ import time
 import shared.util as util
 from shared.pki.pki import PKI
 from shared.pki.nopki import NoPKI
+import random
 
 def main():
 
@@ -30,8 +31,10 @@ def main():
         bootstrap_connections=[Connection(c['host'], c['http_port']) for c in properties['client']['bootstrap_connections']]
 
     database_connection = Connection(properties['database']['host'], properties['database']['port'])
+    wait_time=2
     if not properties['client']['should_bootstrap']:
         bootstrap_connections = []
+        wait_time=0
 
     me = FullChainPeer(properties['server']['name'],
                         connection, 
@@ -41,9 +44,14 @@ def main():
                         diagnostics=True, pki=pki,
                         bootstrap=properties['client']['should_bootstrap'])
 
+    print("STARTING SERVER")
     me.start_node()
-    time.sleep(3)
+    print("SERVER START INITTED")
+    print("SLEEPING " + str(wait_time) + " SECONDS WAITING FOR SERVER TO START")
+    time.sleep(wait_time)
+    print("SLEEP DONE ATTEMPTING TO START CLIENT")
     me.join_network(bootstrap_connections)
+    print("CLIENT STARTED")
 
 
     def kill_it(signal, frame):
@@ -55,5 +63,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

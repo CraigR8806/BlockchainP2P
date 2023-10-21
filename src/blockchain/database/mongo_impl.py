@@ -20,10 +20,10 @@ class MongoDatabaseImpl(DatabaseInterface):
 
 
     def commit_block(self, block:Block) -> None:
-        self.collection.insert_one(util.documentify_data(block))
+        self.collection.insert_many([util.documentify_data(block)])
 
     def get_block(self, index:int) -> Block:
-        return self.collection.find_one({"index":index})
+        return util.dataify_document(self.collection.find_one({"index":index}))
     
     def get_blocks(self, indicies:t.Iterable[int]) -> t.Iterable[Block]:
         self.collection.find({ "index": { "$in" : indicies }})
