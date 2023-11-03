@@ -1,4 +1,4 @@
-
+import typing as t
 
 
 
@@ -10,8 +10,8 @@ class PKI:
         self.certificate_authority_path = certificate_athority_path
 
 
-    def get_ssl_context(self):
+    def get_ssl_context(self) -> t.Tuple[str, str]:
         return (self.certificate_path, self.private_key_path)
     
-    def get_cert(self):
+    def get_cert(self) -> t.Tuple[str, str]:
         return (self.certificate_path, self.private_key_path)

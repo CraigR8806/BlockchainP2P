@@ -23,7 +23,7 @@ def do_the_thing3(ds):
 
 
 
-def main():
+def testThreads():
 
     i={"a":0,"b":0}
     i.update({"c":0})
@@ -71,6 +71,9 @@ def main():
     print(ds.get_highest_queue_count())
 
 
+def main():
+    print(list(range(0,1)))
+    
 
 if __name__ == '__main__':
     main()

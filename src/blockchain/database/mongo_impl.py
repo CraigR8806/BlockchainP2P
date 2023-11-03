@@ -3,6 +3,7 @@ from blockchain.data.block import Block
 from p2p.connection import Connection
 from pymongo import MongoClient
 import shared.util as util
+from logging import Logger
 import typing as t
 
 
@@ -22,11 +23,14 @@ class MongoDatabaseImpl(DatabaseInterface):
     def commit_block(self, block:Block) -> None:
         self.collection.insert_many([util.documentify_data(block)])
 
+    def commit_blocks(self, blocks:t.Iterable[Block]) -> None:
+        self.collection.insert_many(util.documentify_data(blocks))
+
     def get_block(self, index:int) -> Block:
         return util.dataify_document(self.collection.find_one({"index":index}))
     
     def get_blocks(self, indicies:t.Iterable[int]) -> t.Iterable[Block]:
-        self.collection.find({ "index": { "$in" : indicies }})
+        return [util.dataify_document(b) for b in list(self.collection.find({ "index": { "$in" : indicies }}))]
 
     def get_chain_length(self) -> int:
         return self.collection.count_documents({})

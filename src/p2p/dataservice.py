@@ -28,10 +28,10 @@ class DataService:
         self.__running = False
         self.__highest_queue_count = 0
 
-    def get_highest_queue_count(self):
+    def get_highest_queue_count(self) -> int:
         return self.__highest_queue_count
 
-    def modify(self, key:str, func:DataAccessor, condition:Condition = None, callback:Callable = None, asyync:bool = False):
+    def modify(self, key:str, func:DataAccessor, condition:Condition = None, callback:Callable = None, asyync:bool = False) -> None:
         if key not in self.__data_map:
             raise KeyError(key + " not managed by this DataService...")
         if condition is not None and callback is not None:
@@ -46,7 +46,7 @@ class DataService:
         self.__add_to_queue(entry, asyync)
 
 
-    def __add_to_queue(self, entry:__DataServiceQueueEntry, asyync:bool = False):
+    def __add_to_queue(self, entry:__DataServiceQueueEntry, asyync:bool = False) -> None:
     
         entry.condition = entry.condition if asyync else Condition()
         self.__data_map_condition.acquire()
@@ -59,14 +59,14 @@ class DataService:
             entry.condition.wait()
             entry.condition.release()
 
-    def start_service(self):
+    def start_service(self) -> None:
         if not self.__running:
             self.__running = True
             self.__thread.start()
 
-    def __listen(self):
+    def __listen(self) -> None:
 
-        def exec_callable_with_timeout(func:Callable, args:Iterable, duration:int):
+        def exec_callable_with_timeout(func:Callable, args:Iterable, duration:int) -> None:
             timeout_process = Thread(target=func, args=args)
             timeout_process.start()
 
@@ -93,7 +93,7 @@ class DataService:
 
 
             
-    def stop_service(self):
+    def stop_service(self) -> None:
         if self.__running:
             self.__running = False
             self.__data_map_condition.acquire()
@@ -101,11 +101,11 @@ class DataService:
             self.__data_map_condition.release()
             self.__thread.join(self.__timeout_duration + 1)
 
-    def add(self, key:str, val:Any, condition:Condition = None, callback:Callable = None, asyync:bool = False):
+    def add(self, key:str, val:Any, condition:Condition = None, callback:Callable = None, asyync:bool = False) -> None:
         entry = DataService.__DataServiceQueueEntry(key, self.__add_it, [key, val], condition, callback)
         self.__add_to_queue(entry, asyync=asyync)
 
-    def deep_copy(self, key:str):
+    def deep_copy(self, key:str) -> Any:
         actual_key=key + str(int(time()))
         entry = DataService.__DataServiceQueueEntry(key, 
                                         lambda data_map,deep_copy_map,k,ak:deep_copy_map.update({ak:deepcopy(data_map[k])}),
@@ -114,5 +114,5 @@ class DataService:
         self.__add_to_queue(entry)
         return self.__deep_copy_map.pop(actual_key)
     
-    def __add_it(self, k, v):
+    def __add_it(self, k, v) -> None:
         self.__data_map[k] = v

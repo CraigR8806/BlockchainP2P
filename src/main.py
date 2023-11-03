@@ -32,9 +32,11 @@ def main():
 
     database_connection = Connection(properties['database']['host'], properties['database']['port'])
     wait_time=2
-    if not properties['client']['should_bootstrap']:
+    if properties['client']['is_bootstrap_node']:
         bootstrap_connections = []
         wait_time=0
+
+    is_bootstrap_node = properties['client']['is_bootstrap_node']
 
     me = FullChainPeer(properties['server']['name'],
                         connection, 
@@ -42,7 +44,7 @@ def main():
                         properties['database']['name'], 
                         properties['database']['collection']['name'],
                         diagnostics=True, pki=pki,
-                        bootstrap=properties['client']['should_bootstrap'])
+                        is_bootstrap_node=is_bootstrap_node)
 
     print("STARTING SERVER")
     me.start_node()
@@ -50,8 +52,18 @@ def main():
     print("SLEEPING " + str(wait_time) + " SECONDS WAITING FOR SERVER TO START")
     time.sleep(wait_time)
     print("SLEEP DONE ATTEMPTING TO START CLIENT")
-    me.join_network(bootstrap_connections)
+    me.bootstrap_to_network(bootstrap_connections)
     print("CLIENT STARTED")
+
+
+    if not is_bootstrap_node:
+        me.synchronize_chain(bootstrap_connections[0])
+        chain_length = me.chain.chain_length()
+        print("HERES MY CHAIN LENGTH: " + str(chain_length))
+        blocks = me.chain.get_blocks(0, chain_length)
+        print("HERES MY BLOCKS:")
+        [print(b.data) for b in blocks]
+
 
 
     def kill_it(signal, frame):

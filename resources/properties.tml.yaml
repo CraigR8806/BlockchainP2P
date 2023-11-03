@@ -5,7 +5,7 @@ server:
     https_port: ${HTTPS_PORT}
 
 client:
-    should_bootstrap: ${SHOULD_BOOTSTRAP}
+    is_bootstrap_node: ${IS_BOOTSTRAP_NODE}
     bootstrap_connections:
         - host: ${BOOTSTRAP_CONNECTION_HOST}
           http_port: ${BOOTSTRAP_CONNECTION_HTTP_PORT}

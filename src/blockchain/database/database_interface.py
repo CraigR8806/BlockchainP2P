@@ -17,6 +17,10 @@ class DatabaseInterface(ABC):
         pass
 
     @abstractmethod
+    def commit_blocks(self, blocks:t.Iterable[Block]) -> None:
+        pass
+
+    @abstractmethod
     def get_block(self, index:int) -> Block:
         pass
 
