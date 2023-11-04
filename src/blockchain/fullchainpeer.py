@@ -10,7 +10,7 @@ from blockchain.blockchain_client import BlockchainClient
 class FullChainPeer(ThisPeer):
 
     def __init__(self, name:str, connection:Connection, 
-                 database_connection:Connection, database:str, 
+                 database_connection:Connection, database_name:str, 
                  collection:str, diagnostics:bool=None, pki:PKI=None,
                  is_bootstrap_node:bool=True):
         super().__init__(name, connection, is_bootstrap_node, pki)
@@ -18,11 +18,12 @@ class FullChainPeer(ThisPeer):
         self.server.add_get_endpoint("/chain/blocks", "/chain/blocks", self.__get_blocks)
         self.server.add_get_endpoint("/chain/length", "/chain/length", self.__chain_length)
 
-        if diagnostics:
-            self.diagnostics = Diagnostics(self.server)
 
-        self.chain = Blockchain(database_connection, database, collection, is_bootstrap_node)
-        self.chain_client = BlockchainClient(self.client, self.chain)
+        self.chain = Blockchain(database_connection, database_name, collection, is_bootstrap_node)
+        self.chain_client = BlockchainClient(self.client, self.chain, self.data_service)
+
+        if diagnostics:
+            self.diagnostics = Diagnostics(self.server, self.chain)
 
     def synchronize_chain(self, bootstrap_connection:Connection, post_sync_state:PeerStateEnum = PeerStateEnum.READY) -> None:
         self.data_service.modify("state", lambda v:v.change_state(PeerStateEnum.SYNCHRONIZING))

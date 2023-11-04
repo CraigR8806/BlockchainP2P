@@ -48,10 +48,10 @@ def main():
 
     print("STARTING SERVER")
     me.start_node()
-    print("SERVER START INITTED")
-    print("SLEEPING " + str(wait_time) + " SECONDS WAITING FOR SERVER TO START")
-    time.sleep(wait_time)
-    print("SLEEP DONE ATTEMPTING TO START CLIENT")
+    # print("SERVER START INITTED")
+    # print("SLEEPING " + str(wait_time) + " SECONDS WAITING FOR SERVER TO START")
+    # time.sleep(wait_time)
+    # print("SLEEP DONE ATTEMPTING TO START CLIENT")
     me.bootstrap_to_network(bootstrap_connections)
     print("CLIENT STARTED")
 

@@ -51,17 +51,14 @@ class Server:
     def __node_join(self) -> Response:
         peer = util.extract_data(request.get_data(as_text=True))
         current_active_peers = self.data_service.deep_copy("active_peers")
-        self.app.logger.warning("here's the peer " + peer.name)
         
         if peer not in current_active_peers:
             self.data_service.modify("active_peers", lambda v:v.add(peer))
             current_active_peers = self.data_service.deep_copy("active_peers")
             responses = self.client.join_network([p for p in current_active_peers if p != self.parent_peer], peer, logger=self.app.logger)
-            self.app.logger.warning("before adding them " + str(current_active_peers))
             for p in responses:
                 self.data_service.modify("active_peers", lambda v:v.update(util.extract_data(responses[p].text)))
             current_active_peers = self.data_service.deep_copy("active_peers")
-            self.app.logger.warning("after adding them " + str(current_active_peers))
 
         return self.build_response(200, current_active_peers)
     

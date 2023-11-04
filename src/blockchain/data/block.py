@@ -14,3 +14,8 @@ class Block(DocumentEntry):
 
     def calculate_hash(self) -> str:
         return sha256(jsonpickle.encode(self).encode('utf-8')).hexdigest()
+    
+    def copy_of(self) -> 'Block':
+        out = Block(self.timestamp, self.data, self.index, self.previous_hash)
+        out.hash = self.hash
+        return out

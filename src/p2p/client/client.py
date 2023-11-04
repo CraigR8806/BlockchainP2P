@@ -6,6 +6,7 @@ from p2p.peer.peer import Peer
 from p2p.dataservice import DataService
 from shared.pki.pki import PKI
 from logging import Logger
+from time import sleep
 import typing as t
 
 class Client:
@@ -24,7 +25,6 @@ class Client:
         if peer is None:
             peer = self.parent_peer
         return self.post_some([Peer('any',c) for c in bootstrap_connections], '/node/join', peer, logger=logger)
-        
             
     def shutdown_server(self) -> None:
         self.get_one(self.parent_peer.connection, '/api/shutdown')
@@ -56,18 +56,48 @@ class Client:
     def post_one(self, connection:Connection, uri:str, data:any, logger:Logger = None) -> Response:
         return self.__post(connection, uri, data, logger=logger)
 
-    def __get(self, connection:Connection, uri:str, params:t.Dict[str, str] = None, logger:Logger = None) -> Response:
+    def __get(self, 
+              connection:Connection, 
+              uri:str, 
+              params:t.Dict[str, str] = None,
+              retry_on_fail:int = 3,
+              wait_time_between_retries:float = 0.5,
+              logger:Logger = None) -> Response:
         if logger:
                 logger.debug("Making GET request to " + connection.host + ":" + str(connection.port))
-        return requests.get(self.__build_url(connection, uri), headers={"Accept": "application/json"},
-                            verify=self.pki.certificate_authority_path, cert=self.pki.get_cert(),
-                            params=params)
+        return self.__retry_if_fail(lambda: requests.get(self.__build_url(connection, uri), headers={"Accept": "application/json"},
+                                    verify=self.pki.certificate_authority_path, cert=self.pki.get_cert(),
+                                    params=params), retry_on_fail, wait_time_between_retries)
 
-    def __post(self, connection:Connection, uri:str, data:any, logger:Logger = None) -> Response:
+    def __post(self, 
+               connection:Connection, 
+               uri:str, 
+               data:any,
+               retry_on_fail:int = 3,
+               wait_time_between_retries:float = 0.5,
+               logger:Logger = None) -> Response:
         if logger:
                 logger.debug("Making POST request to " + connection.host + ":" + str(connection.port))
-        return requests.post(self.__build_url(connection, uri), util.jsonify_data(data), headers={"Accept": "application/json"},
-                             verify=self.pki.certificate_authority_path, cert=self.pki.get_cert())
+
+        return self.__retry_if_fail(lambda: requests.post(self.__build_url(connection, uri), util.jsonify_data(data),
+                                    headers={"Accept": "application/json"},
+                                    verify=self.pki.certificate_authority_path, 
+                                    cert=self.pki.get_cert()), retry_on_fail, wait_time_between_retries)
+    
+
+    def __retry_if_fail(self, func:t.Callable, retries:int, wait:float):
+        attempts = 0
+        success = False
+        ret = None
+        while not success and attempts <= retries:
+            try:
+                ret = func()
+                success = True
+            except:
+                attempts+=1
+                sleep(wait)
+
+        return ret
     
     def __build_url(self, connection:Connection, uri:str) -> str:
         return self.__get_protocol() + "://" + connection.host + ":" + str(connection.port) + "/" + uri

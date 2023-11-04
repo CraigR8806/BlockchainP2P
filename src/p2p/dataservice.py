@@ -4,12 +4,51 @@ from copy import deepcopy
 from time import time
 
 
-DataAccessor = Callable[[Any], NoReturn]
-
-
 class DataService:
 
+
+    """
+    DataService provides a thread safe service for thread shared variables generically \n
+    Variables can be:
+     - added to the service by calling the `add` method
+     - modified by calling the `modify` method
+     - retrieved as a deep copy by calling `deep_copy` method
+
+    Prior to using the service, it must be started using the `start_service` method\n
+    To propertly collapse the execution stack, `stop_service` method must be called\n
+    ---
+    There are no public instance fields for this class.  All fields should be treated\n
+    as private and should not be accessed by implementers.
+    """
+
+
+    DataAccessor = Callable[[Any], NoReturn]
+
+   
+    
+
     class __DataServiceQueueEntry:
+
+        """
+            __DataServiceQueueEntry is a (private) inner class representation of
+            information needed for each Queue entry
+
+            
+            -----------
+            FIELDS
+            -----------
+            
+            key : str
+                The data map key associated with the queue entry action
+            func : Callable
+                The function object to be executed against the data map object
+            args : Iterable[Any]
+                A list of arguments to be sent to the func function object when calling it
+            condition : Condition
+                A Condition object to notify upon completion of func execution
+            callback : Callable
+                A Callback object to exeucte upon completion of fun execution
+        """
 
         def __init__(self, key:str, func:Callable, args:Iterable[Any], condition:Condition = None, callback:Callable = None):
             self.key = key
@@ -29,9 +68,41 @@ class DataService:
         self.__highest_queue_count = 0
 
     def get_highest_queue_count(self) -> int:
+        """
+        Produces captured metric `!!!WILL BE REMOVED!!!`
+
+        Returns:
+            int: The most number of items seen in the queue up unto this point
+        """
         return self.__highest_queue_count
 
     def modify(self, key:str, func:DataAccessor, condition:Condition = None, callback:Callable = None, asyync:bool = False) -> None:
+        """
+        Used to modify an object already tracked by this data_service.\n
+        This method will take the requested action and add it to the internal queue.\n
+        Can be handled in a synchronise or asynchronise fashion
+
+        ---
+        Args
+        ---
+            `key` (str): The name of the object to execute the `func` function provided against
+
+            `func` (DataAccessor): What to do with the object with name `key`
+
+            `condition` (Condition, optional): Condition to be notified when `func` function completes execution. `asyync cannot be False if provided` Defaults to None.
+
+            `callback` (Callable, optional): Callback to be executed when `func` function completes execution. `asyync cannot be False if provided` Defaults to None.
+
+            `asyync` (bool, optional): Whether calling this method should lock calling thread until completion. Defaults to False.
+
+        ---
+        Raises
+        ---
+            KeyError: If `key` provided doesn't exist in the data map
+            AttributeError: If `condition` and `callback` are both defined
+            AttributeError: If `asyync` is False and `condition` is defined
+            AttributeError: If `asyync` is False and `callback` is defined
+        """
         if key not in self.__data_map:
             raise KeyError(key + " not managed by this DataService...")
         if condition is not None and callback is not None:
@@ -47,6 +118,9 @@ class DataService:
 
 
     def __add_to_queue(self, entry:__DataServiceQueueEntry, asyync:bool = False) -> None:
+        """
+        `PRIVATE METHOD, DO NOT ACCESS OR CALL`
+        """
     
         entry.condition = entry.condition if asyync else Condition()
         self.__data_map_condition.acquire()
@@ -60,11 +134,17 @@ class DataService:
             entry.condition.release()
 
     def start_service(self) -> None:
+        """
+        Starts the underlying thread for the data service
+        """
         if not self.__running:
             self.__running = True
             self.__thread.start()
 
     def __listen(self) -> None:
+        """
+        `PRIVATE METHOD, DO NOT ACCESS OR CALL`
+        """
 
         def exec_callable_with_timeout(func:Callable, args:Iterable, duration:int) -> None:
             timeout_process = Thread(target=func, args=args)
@@ -94,6 +174,9 @@ class DataService:
 
             
     def stop_service(self) -> None:
+        """
+        Stops the underlying thread for the data service
+        """
         if self.__running:
             self.__running = False
             self.__data_map_condition.acquire()
@@ -102,10 +185,31 @@ class DataService:
             self.__thread.join(self.__timeout_duration + 1)
 
     def add(self, key:str, val:Any, condition:Condition = None, callback:Callable = None, asyync:bool = False) -> None:
+        """
+        Adds a new variable to be tracked by the data service\n
+        Can be handled in a synchronise or asynchronise fashion
+
+        Args:
+            `key` (str): The name of the object 
+
+            `val` (Any): The value of the object
+
+            `condition` (Condition, optional): Condition to be notified when object added to data map. Defaults to None.
+
+            `callback` (Callable, optional): Callback to be executed when object added to data map. Defaults to None.
+
+            `asyync` (bool, optional): Whether calling this method should lock calling thread until completion. Defaults to False.
+        """
         entry = DataService.__DataServiceQueueEntry(key, self.__add_it, [key, val], condition, callback)
         self.__add_to_queue(entry, asyync=asyync)
 
     def deep_copy(self, key:str) -> Any:
+        """
+        Retrieves a copy of an object from the data service\n
+
+        Args:
+            `key` (str): The name of the object 
+        """
         actual_key=key + str(int(time()))
         entry = DataService.__DataServiceQueueEntry(key, 
                                         lambda data_map,deep_copy_map,k,ak:deep_copy_map.update({ak:deepcopy(data_map[k])}),
@@ -115,4 +219,7 @@ class DataService:
         return self.__deep_copy_map.pop(actual_key)
     
     def __add_it(self, k, v) -> None:
+        """
+        `PRIVATE METHOD, DO NOT ACCESS OR CALL`
+        """
         self.__data_map[k] = v
