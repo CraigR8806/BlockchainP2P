@@ -10,23 +10,23 @@ class BlockchainClient:
 
 
     def __init__(self, client:Client, chain:Blockchain, data_service:DataService):
-        self.client = client
-        self.chain = chain
-        self.data_service = data_service
+        self.__client = client
+        self.__chain = chain
+        self.__data_service = data_service
 
     def synchronize_chain(self, bootstrap_connection: Connection) -> None:
-        start = self.chain.chain_length()
-        end = util.extract_data(self.client.get_one(bootstrap_connection, "/chain/length").text)
+        start = self.__chain.chain_length()
+        end = util.extract_data(self.__client.get_one(bootstrap_connection, "/chain/length").text)
 
         if start < end:
-            blocks = util.extract_data(self.client.get_one(bootstrap_connection, "/chain/blocks", {"start":str(start), "end":str(end)}).text)
+            blocks = util.extract_data(self.__client.get_one(bootstrap_connection, "/chain/blocks", {"start":str(start), "end":str(end)}).text)
 
-            self.chain.commit_blocks(blocks)
+            self.__chain.commit_blocks(blocks)
 
-        self.data_service.modify("state", lambda v:v.change_state(PeerStateEnum.VALIDATING))
+        self.__data_service.modify("state", lambda v:v.change_state(PeerStateEnum.VALIDATING))
 
-        if not self.chain.is_chain_valid():
-            self.data_service.modify("state", lambda v:v.change_state(PeerStateEnum.ERROR))
+        if not self.__chain.is_chain_valid():
+            self.__data_service.modify("state", lambda v:v.change_state(PeerStateEnum.ERROR))
             
 
         

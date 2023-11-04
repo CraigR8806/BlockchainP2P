@@ -17,41 +17,41 @@ class Blockchain:
                  collection:str, 
                  is_bootstrap_node:bool):
 
-        self.database = MongoDatabaseImpl(database_connection, database_name, collection)
-        if is_bootstrap_node and self.database.get_chain_length() == 0:
-            self.database.commit_block(self.create_genesis_block())
+        self.__database = MongoDatabaseImpl(database_connection, database_name, collection)
+        if is_bootstrap_node and self.__database.get_chain_length() == 0:
+            self.__database.commit_block(self.__create_genesis_block())
 
-        self.data_service = data_service
+        self.__data_service = data_service
 
-        self.change_pool = "chain_change_pool"
-        self.candidate = "chain_candidate"
+        self.__change_pool = "chain_change_pool"
+        self.__candidate = "chain_candidate"
 
-        self.data_service.add(self.change_pool, set([]))
-        self.data_service.add(self.candidate, BlockCandidate())
+        self.__data_service.add(self.__change_pool, set([]))
+        self.__data_service.add(self.__candidate, BlockCandidate())
 
-        print("Loaded blockchain from database.  Chain length is: " + str(self.database.get_chain_length()))
+        print("Loaded blockchain from database.  Chain length is: " + str(self.__database.get_chain_length()))
 
 
-    def create_genesis_block(self) -> Block:
+    def __create_genesis_block(self) -> Block:
         return Block("01/01/2017", "Genesis block", 0, "0")
     
     def chain_length(self) -> int:
-        return self.database.get_chain_length()
+        return self.__database.get_chain_length()
     
     def commit_block(self, block:Block) -> None:
-        self.database.commit_block(block)
+        self.__database.commit_block(block)
 
     def commit_blocks(self, blocks:t.Iterable[Block]) -> None:
-        self.database.commit_blocks(blocks)
+        self.__database.commit_blocks(blocks)
 
     def get_block(self, index:int) -> Block:
-        return self.database.get_block(index)
+        return self.__database.get_block(index)
     
     def get_blocks(self, start:int, end:int) -> t.Iterable[Block]:
         return self.get_blocks_with_indicies(list(range(start, end)))
 
     def get_blocks_with_indicies(self, indicies:t.Iterable[int]) -> t.Iterable[Block]:
-        return self.database.get_blocks(indicies)
+        return self.__database.get_blocks(indicies)
     
     def get_latest_block(self) -> Block:
         return self.get_block(self.chain_length() - 1)
@@ -69,23 +69,23 @@ class Blockchain:
                       current_block.previous_hash == previous_block.hash and
                       self.is_chain_valid(index - 1))
         else:
-            result = current_block.hash == self.create_genesis_block().hash
+            result = current_block.hash == self.__create_genesis_block().hash
 
         return result
 
     def add_to_change_pool(self, block:Block) -> None:
-        self.data_service.modify(self.change_pool, lambda v:v.add(BlockCandidate(block)))
+        self.__data_service.modify(self.__change_pool, lambda v:v.add(BlockCandidate(block)))
 
 
     def process_pool(self) -> Block:
-        change_pool_copy = self.data_service.deep_copy(self.change_pool)
+        change_pool_copy = self.__data_service.deep_copy(self.__change_pool)
         unprocessed = [bc for bc in change_pool_copy if not bc.is_processed()]
         block = None
         if len(unprocessed):
             index = randint(0, len(unprocessed)-1)
             candidate = unprocessed[index]
-            self.data_service.modify(self.change_pool, lambda v:v.remove(candidate), asyync=True)
-            self.data_service.modify(self.candidate, lambda v:v.update(candidate.candidate().copy_of(), candidate.is_processed()))
+            self.__data_service.modify(self.__change_pool, lambda v:v.remove(candidate), asyync=True)
+            self.__data_service.modify(self.__candidate, lambda v:v.update(candidate.candidate().copy_of(), candidate.is_processed()))
             block = unprocessed[index].candidate()
             self.prepare_block_for_chain(block)
             unprocessed[index].processed = True

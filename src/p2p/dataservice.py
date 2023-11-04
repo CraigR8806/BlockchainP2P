@@ -58,6 +58,12 @@ class DataService:
             self.callback = callback
 
     def __init__(self, timeout_duration:int=5):
+        """
+        Constructor for DataService
+
+        Args:
+            timeout_duration (int, optional): The amount of time in seconds to allow passed functional arguments to execute before stopping them. Defaults to 5.
+        """
         self.__data_map = {}
         self.__data_map_condition = Condition()
         self.__deep_copy_map = {}

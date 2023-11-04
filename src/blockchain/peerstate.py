@@ -10,16 +10,16 @@ class PeerStateEnum(Enum):
 class PeerState:
 
     def __init__(self, intial_state:PeerStateEnum):
-        self.state = intial_state
+        self.__state = intial_state
 
     def get_state(self) -> PeerStateEnum:
-        return self.state.name
+        return self.__state.name
     
     def change_state(self, new_state:PeerStateEnum) -> None:
-        self.state = new_state
+        self.__state = new_state
 
     def is_state(self, state:PeerStateEnum) -> bool:
-        return self.state is state
+        return self.__state is state
 
     def not_state(self, state:PeerStateEnum) -> bool:
         return not self.is_state(state)
