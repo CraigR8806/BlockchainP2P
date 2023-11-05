@@ -6,6 +6,8 @@ from blockchain.peerstate import PeerStateEnum
 import shared.util as util
 import typing as t
 
+# NEEDS COMMENTING
+
 class BlockchainClient:
 
 

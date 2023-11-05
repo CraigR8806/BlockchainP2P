@@ -72,7 +72,14 @@ def testThreads():
 
 
 def main():
-    print(list(range(0,1)))
+
+    def test2(**kwargs):
+        print(kwargs["bogger"])
+
+    def test(*args, **kwargs):
+        test2(**kwargs)
+
+    test(1,2,3,4,"zzz", logger="abc", bogger="def")
     
 
 if __name__ == '__main__':

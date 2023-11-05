@@ -5,8 +5,9 @@ from blockchain.data.blockcandidate import BlockCandidate
 from blockchain.database.mongo_impl import MongoDatabaseImpl
 from hashlib import sha256
 from random import randint
-from logging import Logger
 import typing as t
+
+# NEEDS COMMENTING
 
 class Blockchain:
 

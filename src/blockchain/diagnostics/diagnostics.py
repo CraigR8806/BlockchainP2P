@@ -2,6 +2,8 @@ from p2p.server.server import Server
 from blockchain.data.blockchain import Blockchain
 from flask import Response, request
 
+# NEEDS COMMENTING
+
 class Diagnostics:
 
     def __init__(self, server:Server, chain:Blockchain):

@@ -4,6 +4,7 @@ import json
 from blockchain.database.document_entry import DocumentEntry
 import typing as t
 
+# NEEDS COMMENTING
 
 def read_properties_file(file_name:str) -> t.Dict[str, str]:
     out=None

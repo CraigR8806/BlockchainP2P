@@ -7,6 +7,8 @@ from blockchain.data.blockchain import Blockchain
 from blockchain.peerstate import PeerState, PeerStateEnum
 from blockchain.blockchain_client import BlockchainClient
 
+# NEEDS COMMENTING
+
 class FullChainPeer(ThisPeer):
 
     def __init__(self, name:str, connection:Connection, 

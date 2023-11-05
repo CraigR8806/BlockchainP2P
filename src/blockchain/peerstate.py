@@ -1,5 +1,7 @@
 from enum import Enum
 
+# NEEDS COMMENTING
+
 class PeerStateEnum(Enum):
         STARTING = 0
         SYNCHRONIZING = 1

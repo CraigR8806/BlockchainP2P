@@ -7,6 +7,7 @@ from p2p.dataservice import DataService
 from shared.pki.pki import PKI
 from logging import Logger
 from time import sleep
+import asyncio 
 import typing as t
 
 class Client:
@@ -57,34 +58,44 @@ class Client:
         """
         self.get_one(self.__parent_peer.get_connection(), '/api/shutdown')
     
-    def get_all(self, uri:str, logger:Logger = None) -> t.Dict[Peer, Response]:
+    def get_all(self, uri:str, params:t.Dict[str, str], logger:Logger = None) -> t.Dict[Peer, Response]:
         """
         Makes a `GET` request to the provided URI to all active `Peer`s
 
         Args:
             uri (str): The URI to use in the `GET` requests
+            params (t.Dict[str, str], optional): Parameters to be used in the request. Defaults to None.
             logger (Logger, optional): logger `!!!THIS WILL BE REMOVED IN FAVOR OF INSTANCE VARIABLE!!!`. Defaults to None.
+            asyync (bool): Whether the requests should be executed asynchronisly.  Defaults to `True`.
 
         Returns:
             t.Dict[Peer, Response]: A `Dict` of `Peer` to that `Peer`'s `Response`
         """
-        return self.get_some(self.__data_service.deep_copy("active_peers"), uri, logger=logger)
+        return self.get_some(self.__data_service.deep_copy("active_peers"), uri, params=params, logger=logger)
     
-    def get_some(self, peers:t.Iterable[Peer], uri:str, logger:Logger = None) -> t.Dict[Peer, Response]:
+    def get_some(self, 
+                 peers:t.Iterable[Peer], 
+                 uri:str, params:t.Dict[str, str] = None, 
+                 logger:Logger = None, asyync:bool = True) -> t.Dict[Peer, Response]:
         """
         Makes a `GET` request to the provided URI to the provided `set` of `Peer`s
 
         Args:
             peers (t.Iterable[Peer]): The `list` of `Peer`s to contact
             uri (str): The URI to use in the `GET` requests
+            params (t.Dict[str, str], optional): Parameters to be used in the request. Defaults to None.
             logger (Logger, optional): logger `!!!THIS WILL BE REMOVED IN FAVOR OF INSTANCE VARIABLE!!!`. Defaults to None.
 
         Returns:
             t.Dict[Peer, Response]: A `Dict` of `Peer` to that `Peer`'s `Response`
         """
         responses={}
-        for peer in peers:
-            responses[peer] = self.__get(peer.get_connection(), uri, logger=logger)
+
+        if asyync:
+            asyncio.run(self.__async_call(peers, responses, self.__get, uri, params=params, logger=logger))
+        else:
+            for peer in peers:
+                responses.update({peer:self.__get(peer.get_connection(), uri, params=params, logger=logger)})
         return responses
 
     def get_one(self, connection:Connection, uri:str, params:t.Dict[str, str] = None, logger:Logger = None) -> Response:
@@ -116,7 +127,7 @@ class Client:
         """
         return self.post_some(self.__data_service.deep_copy("active_peers"), uri, data, logger=logger)
 
-    def post_some(self, peers:t.Iterable[Peer], uri:str, data:any, logger:Logger = None) -> t.Dict[Peer, Response]:
+    def post_some(self, peers:t.Iterable[Peer], uri:str, data:any, logger:Logger = None, asyync:bool = True) -> t.Dict[Peer, Response]:
         """
         Makes a `POST` request to the provided URI to the provided `set` of `Peer`s
 
@@ -129,10 +140,29 @@ class Client:
         Returns:
             t.Dict[Peer, Response]: A `Dict` of `Peer` to that `Peer`'s `Response`
         """
-        responses = {}
-        for peer in peers:
-            responses[peer] = self.__post(peer.get_connection(), uri, data, logger=logger)
+        responses = {}            
+                                                    
+        if asyync:
+            asyncio.run(self.__async_call(peers, responses, self.__post, uri, data, logger=logger))
+        else:
+            for peer in peers:
+                responses[peer] = self.__post(peer.get_connection(), uri, data, logger=logger)
+
+
         return responses
+
+
+
+    async def __async_call(self, peers:t.Iterable[Peer], responses:t.Dict[Peer, Response], func:t.Callable, *args, **kwargs) -> None:
+        async def add_to_responses(peer):
+            responses.update({peer:func(peer.get_connection(), *args, **kwargs)})
+
+        tasks=[]
+        for peer in peers:
+            tasks.append(asyncio.create_task(add_to_responses(peer)))
+
+        for task in tasks:
+            await task
 
     def post_one(self, connection:Connection, uri:str, data:any, logger:Logger = None) -> Response:
         """

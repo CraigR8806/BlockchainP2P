@@ -1,5 +1,6 @@
 from blockchain.data.block import Block
 
+# NEEDS COMMENTING
 
 class BlockCandidate:
 

@@ -2,6 +2,8 @@ from hashlib import sha256
 from blockchain.database.document_entry import DocumentEntry
 import jsonpickle
 
+# NEEDS COMMENTING
+
 class Block(DocumentEntry):
 
     def __init__(self, timestamp, data:any, index:int, previous_hash=None):
