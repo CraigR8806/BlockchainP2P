@@ -1,14 +1,36 @@
-from flask import Flask, request, Response
 from p2p.peer.peer import Peer
 from p2p.client.client import Client
 from shared.pki.pki import PKI
 from p2p.dataservice import DataService
+from p2p.server.endpoint import Endpoint
+from p2p.authentication.authentication_service import AuthenticationService
+from http import HTTPStatus
+from flask import Flask, request, Response
+from uuid import uuid4
+from enum import Enum
 import threading
 import shared.util as util
 import time
 import math
 import typing as t
 
+
+class Capability:
+    BASE_DIRECTORY = "./resources/react_dynamic/"
+
+    def __init__(self, name: str, js_file: str):
+        self.__name = name
+        self.__js_file = js_file
+        self.__uuid = uuid4().hex
+
+    def get_name(self) -> str:
+        return self.__name
+
+    def get_js_file(self) -> str:
+        return self.__js_file
+
+    def get_uuid(self) -> str:
+        return self.__uuid
 
 
 class Server:
@@ -33,7 +55,9 @@ class Server:
     This class has no accessible fields
     """
 
-    def __init__(self, parent_peer:Peer, client:Client, data_service:DataService, pki:PKI):
+    def __init__(
+        self, parent_peer: Peer, client: Client, data_service: DataService, pki: PKI, authentication_service:AuthenticationService
+    ):
         """
         Constructor for Server
 
@@ -42,31 +66,77 @@ class Server:
             client (Client): The `Client` provided by the parent `ThisPeer`
             data_service (DataService): The `DataService` provided by the parent `ThisPeer`
             pki (PKI): The `PKI` object
+            authentication_service (AuthenticationService)
         """
         self.__parent_peer = parent_peer
         self.__data_service = data_service
         self.__client = client
         self.__pki = pki
-        
+        self.__endpoints = []
+
         self.__app = Flask(__name__)
-        self.add_post_endpoint("/node/join", "node_join", self.__node_join)
-        self.add_get_endpoint("/api/shutdown", "shutdown", self.__shutdown_server)
+        self.add_endpoint(
+            Endpoint(
+                "/node/join",
+                "Node Join Request",
+                Endpoint.MethodEnum.POST,
+                {"peers": "A py/set of Peers"},
+                {
+                    "name": "The Peer name",
+                    "Connection": {
+                        "host": "The host of the peer",
+                        "port": "The port the service is running on",
+                    },
+                },
+            ),
+            self.__node_join,
+        )
+        self.add_endpoint(
+            Endpoint("/api/shutdown", "shutdown", Endpoint.MethodEnum.GET, {}, {}),
+            self.__shutdown_server,
+        )
+        self.add_endpoint(
+            Endpoint(
+                "/node/capabilities",
+                "Get Node Capabilities",
+                Endpoint.MethodEnum.GET,
+                {"capabilties", "List of capabilities"},
+                {},
+            ),
+            self.__get_capabilities,
+        )
+        self.add_endpoint(
+            Endpoint(
+                "/node/capability",
+                "getCapability",
+                Endpoint.MethodEnum.GET,
+                {"text": "The JS file associated with the supplied UUID"},
+                {"uuid": "The requested capability by UUID"},
+            ),
+            self.__get_capability,
+        )
 
         self.__running = False
-    
+
+        self.__capabilities = [
+            Capability(
+                "General Information", "GeneralInformation/GeneralInformation.js"
+            )
+        ]
 
     def start_server(self) -> None:
         """
         Starts the server `Thread`
         """
         self.__start_time = time.time()
-        self.__server_thread = threading.Thread(target=self.__app.run, 
-                                              kwargs=
-                                              {
-                                                  'host':self.__parent_peer.get_connection().get_host(),
-                                                  'port':self.__parent_peer.get_connection().get_port(),
-                                                  'ssl_context':self.__pki.get_ssl_context()
-                                              })
+        self.__server_thread = threading.Thread(
+            target=self.__app.run,
+            kwargs={
+                "host": self.__parent_peer.get_connection().get_host(),
+                "port": self.__parent_peer.get_connection().get_port(),
+                "ssl_context": self.__pki.get_ssl_context(),
+            },
+        )
         self.__server_thread.start()
         self.__running = True
 
@@ -76,30 +146,36 @@ class Server:
         """
         self.__server_thread.join()
         self.__running = False
-    
 
-    def add_post_endpoint(self, uri:str, name:str, func:t.Callable) -> None:
+    def add_endpoint(self, endpoint: Endpoint, func: t.Callable) -> None:
         """
-        Adds a `POST` endpoint to the server
+        Adds an endpoint to the server
 
         Args:
-            uri (str): The endpoint URI
-            name (str): The endpoint name
+            endpoint (Endpoint): The endpoint definition
             func (t.Callable): What to do when the endpoint is requested
         """
-        self.__app.add_url_rule(uri, name, func, methods=["POST"])
 
-    def add_get_endpoint(self, uri:str, name:str, func:t.Callable) -> None:
-        """
-        Adds a `GET` endpoint to the server
+        def endpoint_wrapper():
+            if request.method == Endpoint.MethodEnum.OPTIONS.value:
+                return self.build_response(HTTPStatus.OK, {})
+            return func()
 
-        Args:
-            uri (str): The endpoint URI
-            name (str): The endpoint name
-            func (t.Callable): What to do when the endpoint is requested
-        """
-        self.__app.add_url_rule(uri, name, func, methods=["GET"])
-
+        self.__endpoints.append(endpoint)
+        self.__app.add_url_rule(
+            endpoint.get_uri(),
+            endpoint.get_name(),
+            endpoint_wrapper,
+            methods=[*endpoint.get_method()],
+        )
+        if endpoint.get_method() == Endpoint.MethodEnum.POST.value:
+            print("Here " + endpoint.get_uri() + " " + endpoint.get_name())
+            self.__app.add_url_rule(
+                endpoint.get_uri(),
+                endpoint.get_name(),
+                lambda: self.build_response(HTTPStatus.OK, {}),
+                methods=["OPTIONS"],
+            )
 
     def __node_join(self) -> Response:
         """
@@ -112,17 +188,24 @@ class Server:
         """
         peer = util.extract_data(request.get_data(as_text=True))
         current_active_peers = self.__data_service.deep_copy("active_peers")
-        
+
         if peer not in current_active_peers:
-            self.__data_service.modify("active_peers", lambda v:v.add(peer))
+            self.__data_service.modify("active_peers", lambda v: v.add(peer))
             current_active_peers = self.__data_service.deep_copy("active_peers")
-            responses = self.__client.join_network([p for p in current_active_peers if p != self.__parent_peer], peer, logger=self.__app.logger)
+            responses = self.__client.join_network(
+                [p for p in current_active_peers if p != self.__parent_peer],
+                peer,
+                logger=self.__app.logger,
+            )
             for p in responses:
-                self.__data_service.modify("active_peers", lambda v:v.update(util.extract_data(responses[p].text)))
+                self.__data_service.modify(
+                    "active_peers",
+                    lambda v: v.update(util.extract_data(responses[p].text)),
+                )
             current_active_peers = self.__data_service.deep_copy("active_peers")
 
         return self.build_response(200, current_active_peers)
-    
+
     def __shutdown_server() -> None:
         """
         Definition for /api/shutdown `GET` endpoint
@@ -130,13 +213,45 @@ class Server:
         Raises:
             RuntimeError: If not running werkzeug server implementation under the `Flask` hood
         """
-        func = request.environ.get('werkzeug.server.shutdown')
+        func = request.environ.get("werkzeug.server.shutdown")
         if func is None:
-            raise RuntimeError('Not running with the Werkzeug Server')
+            raise RuntimeError("Not running with the Werkzeug Server")
         func()
 
+    def __get_capabilities(self) -> Response:
+        return self.build_response(HTTPStatus.OK, self.__capabilities)
 
-    def build_response(self, response_code:int, response_obj:t.Dict[t.Any, t.Any]) -> Response:
+    def __get_capability(self) -> Response:
+        uuid = request.args.get("uuid")
+        filename = ""
+        try:
+            filename = (
+                Capability.BASE_DIRECTORY
+                + (
+                    [
+                        capability
+                        for capability in self.__capabilities
+                        if capability.get_uuid() == uuid
+                    ][0]
+                ).get_js_file()
+            )
+        except:
+            return self.build_response(HTTPStatus.NOT_FOUND)
+        out = ""
+        try:
+            with open(filename, "r") as file:
+                out = file.read()
+        except FileNotFoundError:
+            return self.build_response(HTTPStatus.NOT_FOUND)
+
+        return self.build_response(HTTPStatus.OK, out, False)
+
+    def build_response(
+        self,
+        response_code: int,
+        response_obj: t.Dict[t.Any, t.Any] = None,
+        package: bool = True,
+    ) -> Response:
         """
         A nice simple way to put together a `Flask` `Response` object
 
@@ -147,12 +262,24 @@ class Server:
         Returns:
             Response: A `Flask` `Response` object
         """
-        return Response(
-            response=util.jsonify_data(response_obj),
-            status=response_code,
-            mimetype="application/json"
+
+        response = (
+            util.jsonify_data(response_obj)
+            if package and response_code is not None
+            else response_obj
+            if response_code is not None
+            else None
         )
-    
+        return Response(
+            response=response,
+            status=response_code,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+            },
+            mimetype="application/json",
+        )
 
     def uptime(self) -> t.Dict[str, int]:
         """
@@ -162,14 +289,16 @@ class Server:
         Returns:
             t.Dict[str, int]: A human readable representation of the amount of time the server has been up
         """
-        delta=time.time() - self.__start_time
-        return { "year": math.floor(delta/31536000),
-                    "month": math.floor(delta/2629746)%12,
-                    "day": math.floor(delta/86400)%30,
-                    "hour": math.floor(delta/3600)%24,
-                    "minute": math.floor(delta/60)%60,
-                    "second": math.floor(delta%60) }
-    
+        delta = time.time() - self.__start_time
+        return {
+            "year": math.floor(delta / 31536000),
+            "month": math.floor(delta / 2629746) % 12,
+            "day": math.floor(delta / 86400) % 30,
+            "hour": math.floor(delta / 3600) % 24,
+            "minute": math.floor(delta / 60) % 60,
+            "second": math.floor(delta % 60),
+        }
+
     def get_data_service(self) -> DataService:
         """
         Accessor for `DataService` instance variable
@@ -178,7 +307,7 @@ class Server:
             DataService: The servers `DataService` reference
         """
         return self.__data_service
-    
+
     def get_parent_peer(self) -> Peer:
         """
         Accessor for the parent `Peer` object
@@ -187,7 +316,9 @@ class Server:
             Peer: The parent `Peer` object
         """
         return self.__parent_peer
-       
-    
 
+    def add_capability(self, capability: Capability) -> None:
+        return self.__capabilities.append(capability)
 
+    def get_endpoints(self) -> t.Iterable[Endpoint]:
+        return self.__endpoints

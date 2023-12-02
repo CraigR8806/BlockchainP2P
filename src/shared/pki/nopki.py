@@ -32,7 +32,6 @@ class NoPKI(PKI):
 
         self.certificate_authority_path = False
 
-
     def get_ssl_context(self) -> t.Tuple[str, str]:
         """
         Overloads get_ssl_context to return `None`
@@ -41,4 +40,3 @@ class NoPKI(PKI):
             None
         """
         return None
-    

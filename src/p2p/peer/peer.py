@@ -13,7 +13,7 @@ class Peer:
     This class has no accessible fields
     """
 
-    def __init__(self, name:str, connection:Connection):
+    def __init__(self, name: str, connection: Connection):
         """
         Constructor for Peer
 
@@ -32,7 +32,7 @@ class Peer:
             Connection: The `Connection` object
         """
         return self.__connection
-    
+
     def get_name(self) -> str:
         """
         Accessor for the `Peer` name
@@ -42,15 +42,18 @@ class Peer:
         """
         return self.__name
 
+    def __eq__(self, other: "Peer"):
+        return (
+            self.__name == other.__name
+            and self.__connection.get_host() == other.__connection.get_host()
+            and self.__connection.get_port() == other.__connection.get_port()
+        )
 
-    def __eq__(self, other:'Peer'):
-        return self.__name == other.__name \
-            and self.__connection.get_host() == other.__connection.get_host() \
-            and self.__connection.get_port() == other.__connection.get_port() 
-    
-
-    def __ne__(self, other:'Peer'):
+    def __ne__(self, other: "Peer"):
         return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.__name)
+
+    def __str__(self):
+        return self.get_name()

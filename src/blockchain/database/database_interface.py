@@ -16,7 +16,9 @@ class DatabaseInterface(ABC):
     This class has no accessible fields
     """
 
-    def __init__(self, database_connection:Connection, database_protocol:str, database:str):
+    def __init__(
+        self, database_connection: Connection, database_protocol: str, database: str
+    ):
         """
         Constructor for DatabaseInterface
 
@@ -25,12 +27,17 @@ class DatabaseInterface(ABC):
             database_protocol (str): Protocol to use to communicate with the database
             database (str): The database name
         """
-        self._database_connection_string = database_protocol + "://" + database_connection.get_host() + ":" + database_connection.get_port()
+        self._database_connection_string = (
+            database_protocol
+            + "://"
+            + database_connection.get_host()
+            + ":"
+            + database_connection.get_port()
+        )
         self._database = database
 
-
     @abstractmethod
-    def commit_block(self, block:Block) -> None:
+    def commit_block(self, block: Block) -> None:
         """
         Saves `Block` to database
 
@@ -40,7 +47,7 @@ class DatabaseInterface(ABC):
         pass
 
     @abstractmethod
-    def commit_blocks(self, blocks:t.Iterable[Block]) -> None:
+    def commit_blocks(self, blocks: t.Iterable[Block]) -> None:
         """
         Saves `list` of `Block`s to the database
 
@@ -50,7 +57,7 @@ class DatabaseInterface(ABC):
         pass
 
     @abstractmethod
-    def get_block(self, index:int) -> Block:
+    def get_block(self, index: int) -> Block:
         """
         Retrieves `Block` from database
 
@@ -63,7 +70,7 @@ class DatabaseInterface(ABC):
         pass
 
     @abstractmethod
-    def get_blocks(self, indicies:t.Iterable[int]) -> t.Iterable[Block]:
+    def get_blocks(self, indicies: t.Iterable[int]) -> t.Iterable[Block]:
         """
         Retrieves `Block`s from database
 
@@ -84,8 +91,3 @@ class DatabaseInterface(ABC):
             int: The length of the `Blockchain` in the database
         """
         pass
-
-
-
-
-    

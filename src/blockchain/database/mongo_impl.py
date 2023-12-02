@@ -7,9 +7,6 @@ from logging import Logger
 import typing as t
 
 
-
-
-
 class MongoDatabaseImpl(DatabaseInterface):
 
     """
@@ -18,11 +15,11 @@ class MongoDatabaseImpl(DatabaseInterface):
     ---
     FIELDS
     ---
-    
+
     This class has no accessible fields
     """
 
-    def __init__(self, database_connection:Connection, database:str, collection:str):
+    def __init__(self, database_connection: Connection, database: str, collection: str):
         """
         Constructor for MongoDatabaseImpl
 
@@ -37,8 +34,7 @@ class MongoDatabaseImpl(DatabaseInterface):
         self.__client = MongoClient(self._database_connection_string)
         self.__collection = self.__client[database][collection]
 
-
-    def commit_block(self, block:Block) -> None:
+    def commit_block(self, block: Block) -> None:
         """
         Saves `Block` to database
 
@@ -47,7 +43,7 @@ class MongoDatabaseImpl(DatabaseInterface):
         """
         self.__collection.insert_many([util.documentify_data(block)])
 
-    def commit_blocks(self, blocks:t.Iterable[Block]) -> None:
+    def commit_blocks(self, blocks: t.Iterable[Block]) -> None:
         """
         Saves `list` of `Block`s to the database
 
@@ -56,7 +52,7 @@ class MongoDatabaseImpl(DatabaseInterface):
         """
         self.__collection.insert_many(util.documentify_data(blocks))
 
-    def get_block(self, index:int) -> Block:
+    def get_block(self, index: int) -> Block:
         """
         Retrieves `Block` from database
 
@@ -66,9 +62,9 @@ class MongoDatabaseImpl(DatabaseInterface):
         Returns:
             Block: The requested `Block`
         """
-        return util.dataify_document(self.__collection.find_one({"index":index}))
-    
-    def get_blocks(self, indicies:t.Iterable[int]) -> t.Iterable[Block]:
+        return util.dataify_document(self.__collection.find_one({"index": index}))
+
+    def get_blocks(self, indicies: t.Iterable[int]) -> t.Iterable[Block]:
         """
         Retrieves `Block`s from database
 
@@ -78,7 +74,10 @@ class MongoDatabaseImpl(DatabaseInterface):
         Returns:
             t.Iterable[Block]: The request `Block`s
         """
-        return [util.dataify_document(b) for b in list(self.__collection.find({ "index": { "$in" : indicies }}))]
+        return [
+            util.dataify_document(b)
+            for b in list(self.__collection.find({"index": {"$in": indicies}}))
+        ]
 
     def get_chain_length(self) -> int:
         """
@@ -88,4 +87,3 @@ class MongoDatabaseImpl(DatabaseInterface):
             int: The length of the `Blockchain` in the database
         """
         return self.__collection.count_documents({})
-    

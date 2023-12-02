@@ -14,3 +14,8 @@ testing/resources/peer/**
 nodehost
 nodehost.pub
 vpnpki/**
+.scriptshash
+checkScripts.sh
+deployReact.sh
+media/**
+
