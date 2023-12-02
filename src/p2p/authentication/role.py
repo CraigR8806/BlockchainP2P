@@ -1,6 +1,8 @@
-class Role:
-    def __init__(self, role_name: str):
-        self.__role_name = role_name
+from enum import Enum
 
-    def get_name(self) -> str:
-        return self.__role_name
+class Role(Enum):
+
+    OPEN = "OPEN"
+    NODE = "NODE"
+    USER = "USER"
+    ADMIN = "ADMIN"

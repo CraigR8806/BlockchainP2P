@@ -1,10 +1,12 @@
-import requests
-from requests import Response
-import shared.util as util
 from p2p.connection import Connection
 from p2p.peer.peer import Peer
 from p2p.dataservice import DataService
+from p2p.authentication.api_key import ApiKey
 from shared.pki.pki import PKI
+
+import requests
+from requests import Response
+import shared.util as util
 from logging import Logger
 from time import sleep
 import asyncio
@@ -24,7 +26,13 @@ class Client:
     This class has no accessible fields
     """
 
-    def __init__(self, parent_peer: Peer, data_service: DataService, pki: PKI):
+    def __init__(
+        self,
+        parent_peer: Peer,
+        data_service: DataService,
+        pki: PKI,
+        api_key: ApiKey = None,
+    ):
         """
         Constructor for the Client class
 
@@ -36,6 +44,7 @@ class Client:
         self.__parent_peer = parent_peer
         self.__data_service = data_service
         self.__pki = pki
+        self.__api_key = api_key
 
     def join_network(
         self, peers: t.Iterable[Peer], peer: Peer = None, logger: Logger = None
@@ -53,7 +62,7 @@ class Client:
         """
         if peer is None:
             peer = self.__parent_peer
-        return self.post_some(peers, "/node/join", peer, logger=logger)
+        return self.post_some(peers, "/node/join", {"peer":peer}, logger=logger)
 
     def shutdown_server(self) -> None:
         """
@@ -248,6 +257,8 @@ class Client:
                 + ":"
                 + connection.get_port()
             )
+        if self.__api_key is not None:
+            params.update({"api_key", self.__api_key})
         return self.__retry_if_fail(
             lambda: requests.get(
                 self.__build_url(connection, uri),
@@ -276,7 +287,8 @@ class Client:
                 + ":"
                 + connection.get_port()
             )
-
+        if self.__api_key is not None:
+            data.update({"api_key", self.__api_key})
         return self.__retry_if_fail(
             lambda: requests.post(
                 self.__build_url(connection, uri),

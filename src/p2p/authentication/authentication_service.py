@@ -12,15 +12,16 @@ T = TypeVar("T")
 
 class AuthenticationService(ABC):
     class Response(Generic[T]):
-        def __init__(self, status: int, message: str, returnedObj: T = None):
+        def __init__(self, status: int, message: str, returned_obj: T = None):
             self.status = status
             self.message = message
+            self.returned_obj = returned_obj
 
     def __init__(self):
         pass
 
     @abstractmethod
-    def load_user(self, api_key: ApiKey) -> "AuthenticationService.Response[User]":
+    def load_user(self, api_key: str) -> "AuthenticationService.Response[User]":
         pass
 
     @abstractmethod

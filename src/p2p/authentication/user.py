@@ -5,9 +5,10 @@ from uuid import uuid4, UUID
 
 
 class User:
-    def __init__(self, username: str, roles: t.Iterable[Role]):
+    def __init__(self, username: str, roles: t.Set[Role]):
         self.__username = username
         self.__roles = roles
+        self.__roles.add(Role.OPEN)
         self.__apikey = ApiKey()
         self.__uuid = uuid4()
 

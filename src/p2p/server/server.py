@@ -4,10 +4,10 @@ from shared.pki.pki import PKI
 from p2p.dataservice import DataService
 from p2p.server.endpoint import Endpoint
 from p2p.authentication.authentication_service import AuthenticationService
+from p2p.authentication.role import Role
 from http import HTTPStatus
 from flask import Flask, request, Response
 from uuid import uuid4
-from enum import Enum
 import threading
 import shared.util as util
 import time
@@ -56,7 +56,12 @@ class Server:
     """
 
     def __init__(
-        self, parent_peer: Peer, client: Client, data_service: DataService, pki: PKI, authentication_service:AuthenticationService
+        self,
+        parent_peer: Peer,
+        client: Client,
+        data_service: DataService,
+        pki: PKI,
+        authentication_service: AuthenticationService = None,
     ):
         """
         Constructor for Server
@@ -73,6 +78,7 @@ class Server:
         self.__client = client
         self.__pki = pki
         self.__endpoints = []
+        self.__authentication_service = authentication_service
 
         self.__app = Flask(__name__)
         self.add_endpoint(
@@ -81,13 +87,7 @@ class Server:
                 "Node Join Request",
                 Endpoint.MethodEnum.POST,
                 {"peers": "A py/set of Peers"},
-                {
-                    "name": "The Peer name",
-                    "Connection": {
-                        "host": "The host of the peer",
-                        "port": "The port the service is running on",
-                    },
-                },
+                {"peer": "A Peer object"},
             ),
             self.__node_join,
         )
@@ -159,6 +159,31 @@ class Server:
         def endpoint_wrapper():
             if request.method == Endpoint.MethodEnum.OPTIONS.value:
                 return self.build_response(HTTPStatus.OK, {})
+
+            if (
+                self.__authentication_service is not None
+                and endpoint.accessible_to() != Role.OPEN
+            ):
+                api_key = request.args.get("api_key", None)
+                if api_key is None:
+                    return self.build_response(
+                        HTTPStatus.UNAUTHORIZED,
+                        {
+                            "message": "API Key must be supplied with each request as api_key"
+                        },
+                    )
+                response = self.__authentication_service.load_user(api_key)
+                if response.status != 0:
+                    return self.build_response(
+                        HTTPStatus.UNAUTHORIZED, {"message": response.message}
+                    )
+                user = response.returned_obj
+                if not user.has_role(endpoint.accessible_to):
+                    return self.build_response(
+                        HTTPStatus.UNAUTHORIZED,
+                        {"message": "You do not have access to this endpoint"},
+                    )
+
             return func()
 
         self.__endpoints.append(endpoint)
@@ -186,7 +211,7 @@ class Server:
         Returns:
             Response: All active `Peer`s
         """
-        peer = util.extract_data(request.get_data(as_text=True))
+        peer = util.extract_data(request.get_data(as_text=True))["peer"]
         current_active_peers = self.__data_service.deep_copy("active_peers")
 
         if peer not in current_active_peers:
